@@ -9,6 +9,8 @@ import { employeeRouter } from './server/routes/employeeRoutes';
 import { auditRouter } from './server/routes/auditRoutes';
 import { reportRouter } from './server/routes/reportRoutes';
 import { userRouter } from './server/routes/userRoutes';
+import { settingsRouter } from './server/routes/settingsRoutes';
+import { ldapRouter } from './server/routes/ldapRoutes';
 
 async function startServer() {
   const app = express();
@@ -48,6 +50,8 @@ async function startServer() {
   app.use('/api/history', auditRouter);
   app.use('/api/reports', reportRouter);
   app.use('/api/admin/users', userRouter);
+  app.use('/api/settings', settingsRouter);
+  app.use('/api/employees/ldap', ldapRouter);
 
   // API 404 handler
   app.use('/api/*', (req: Request, res: Response) => {

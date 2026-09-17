@@ -201,6 +201,60 @@ export interface AuditLog {
   timestamp: string;
 }
 
+export interface LdapAttributeMapping {
+  employee_code: string;
+  full_name: string;
+  username: string;
+  email: string;
+  department: string;
+  designation: string;
+  phone: string;
+  location: string;
+}
+
+export interface LdapConfig {
+  enabled: boolean;
+  server_url: string;
+  bind_dn: string;
+  bind_password?: string;
+  base_dn: string;
+  user_search_filter: string;
+  sync_schedule: string;
+  attribute_mapping: LdapAttributeMapping;
+  last_sync_at?: string;
+  last_sync_status?: 'success' | 'failed' | 'idle';
+  last_sync_message?: string;
+  last_sync_count?: number;
+}
+
+export interface LdapSyncResult {
+  success: boolean;
+  message: string;
+  total_processed: number;
+  created_count: number;
+  updated_count: number;
+  unchanged_count: number;
+  errors_count: number;
+  details: {
+    employee_code: string;
+    full_name: string;
+    department: string;
+    action: 'created' | 'updated' | 'unchanged' | 'error';
+    details?: string;
+  }[];
+  timestamp: string;
+}
+
+export interface SystemSettings {
+  app_name: string;
+  theme: 'default' | 'black_and_white';
+  custom_logo_url: string | null;
+  custom_logo_base64: string | null;
+  company_name: string;
+  updated_at: string;
+  updated_by: string;
+}
+
 export interface DashboardMetrics {
   total_assets: number;
   active_assets: number;

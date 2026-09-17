@@ -6,7 +6,8 @@ import type {
   Asset,
   AuditLog,
   DashboardMetrics,
-  UserRole
+  UserRole,
+  SystemSettings
 } from './types/itam';
 
 import { Navbar } from './components/Navbar';
@@ -28,6 +29,7 @@ import { ReportsView } from './components/ReportsView';
 import { UsersAdminView } from './components/UsersAdminView';
 import { SystemInfoModal } from './components/SystemInfoModal';
 import { LoginModal } from './components/LoginModal';
+import { ThemeSettingsModal } from './components/ThemeSettingsModal';
 
 export default function App() {
   // 1. Authentication State
@@ -35,6 +37,10 @@ export default function App() {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  // 1b. System Settings State (Theme & Logo)
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // 2. Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
@@ -221,11 +227,27 @@ export default function App() {
     }
   }, [permissions]);
 
+  // System Settings fetch (Theme & Logo)
+  const fetchSettings = useCallback(async () => {
+    try {
+      const data = await api.settings.get();
+      setSystemSettings(data.settings);
+    } catch (err) {
+      console.error('Error fetching system settings:', err);
+    }
+  }, []);
+
+  const handleSaveSettings = async (updates: Partial<SystemSettings>) => {
+    const res = await api.settings.update(updates);
+    setSystemSettings(res.settings);
+  };
+
   // Initial Load
   useEffect(() => {
     fetchAuthUser();
     fetchMetrics();
-  }, [fetchAuthUser, fetchMetrics]);
+    fetchSettings();
+  }, [fetchAuthUser, fetchMetrics, fetchSettings]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -459,12 +481,18 @@ export default function App() {
     showToast('Password reset successfully.');
   };
 
+  const isBw = systemSettings?.theme === 'black_and_white';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
+    <div className={`min-h-screen flex flex-col font-sans transition-colors ${
+      isBw ? 'bg-zinc-100 text-zinc-950 selection:bg-black selection:text-white' : 'bg-slate-50 text-slate-800'
+    }`}>
       {/* Toast Banner */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-70 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <div className={`fixed bottom-5 right-5 z-70 text-xs px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150 ${
+          isBw ? 'bg-black text-white border-zinc-700' : 'bg-slate-900 text-white border-slate-700'
+        }`}>
+          <span className={`w-2 h-2 rounded-full ${isBw ? 'bg-white' : 'bg-emerald-400'}`}></span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -476,6 +504,8 @@ export default function App() {
         onSwitchRole={handleSwitchRole}
         onLogout={handleLogout}
         onOpenSystemInfo={() => setIsSystemInfoOpen(true)}
+        settings={systemSettings}
+        onOpenThemeSettings={() => setIsThemeModalOpen(true)}
       />
 
       {/* Main Workspace with Sidebar */}
@@ -492,7 +522,7 @@ export default function App() {
         />
 
         {/* View Port Area */}
-        <main className="flex-1 overflow-y-auto bg-slate-100/60 pb-12">
+        <main className={`flex-1 overflow-y-auto pb-12 ${isBw ? 'bg-zinc-100' : 'bg-slate-100/60'}`}>
           {currentTab === 'dashboard' && (
             <DashboardView
               metrics={metrics}
@@ -550,6 +580,7 @@ export default function App() {
               onSelectEmployeeAssets={handleSelectEmployeeAssets}
               permissions={permissions}
               departments={employeeDepartments}
+              onRefreshEmployees={fetchEmployees}
             />
           )}
 
@@ -666,6 +697,14 @@ export default function App() {
       {isSystemInfoOpen && (
         <SystemInfoModal onClose={() => setIsSystemInfoOpen(false)} />
       )}
+
+      {/* Theme & Logo Customization Modal (Super Admin) */}
+      <ThemeSettingsModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        currentSettings={systemSettings}
+        onSaveSettings={handleSaveSettings}
+      />
 
       {/* Login Modal */}
       {isLoginModalOpen && (

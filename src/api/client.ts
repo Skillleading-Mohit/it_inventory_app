@@ -5,7 +5,10 @@ import type {
   AssetPhoto,
   AuditLog,
   DashboardMetrics,
-  UserRole
+  UserRole,
+  SystemSettings,
+  LdapConfig,
+  LdapSyncResult
 } from '../types/itam';
 
 const API_BASE = '/api';
@@ -215,6 +218,38 @@ export const api = {
     async toggleStatus(id: string): Promise<{ message: string; employee: Employee; warning?: string }> {
       const res = await fetch(`${API_BASE}/employees/${id}/toggle-status`, { method: 'POST' });
       return handleResponse(res);
+    },
+
+    async getLdapConfig(): Promise<{ config: LdapConfig }> {
+      const res = await fetch(`${API_BASE}/employees/ldap/config`);
+      return handleResponse(res);
+    },
+
+    async saveLdapConfig(data: Partial<LdapConfig>): Promise<{ message: string; config: LdapConfig }> {
+      const res = await fetch(`${API_BASE}/employees/ldap/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return handleResponse(res);
+    },
+
+    async testLdap(data?: Partial<LdapConfig>): Promise<{ success: boolean; message: string; diagnostics: any }> {
+      const res = await fetch(`${API_BASE}/employees/ldap/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data || {})
+      });
+      return handleResponse(res);
+    },
+
+    async syncLdap(custom_entries?: any[]): Promise<LdapSyncResult> {
+      const res = await fetch(`${API_BASE}/employees/ldap/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ custom_entries })
+      });
+      return handleResponse(res);
     }
   },
 
@@ -296,6 +331,23 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_password })
+      });
+      return handleResponse(res);
+    }
+  },
+
+  // System Branding & Theme Settings
+  settings: {
+    async get(): Promise<{ settings: SystemSettings }> {
+      const res = await fetch(`${API_BASE}/settings`);
+      return handleResponse(res);
+    },
+
+    async update(data: Partial<SystemSettings>): Promise<{ message: string; settings: SystemSettings }> {
+      const res = await fetch(`${API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
       return handleResponse(res);
     }

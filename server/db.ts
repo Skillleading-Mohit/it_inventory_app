@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import type { User, Employee, Asset, AssetPhoto, AuditLog, UserRole } from '../src/types/itam';
+import type { User, Employee, Asset, AssetPhoto, AuditLog, UserRole, SystemSettings, LdapConfig } from '../src/types/itam';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'itam_db.json');
@@ -22,6 +22,8 @@ export interface DatabaseSchema {
   photos: AssetPhoto[];
   audit_logs: AuditLog[];
   rate_limit_records: Record<string, { attempts: number; locked_until?: number }>;
+  settings?: SystemSettings;
+  ldap_config?: LdapConfig;
 }
 
 // Role to permissions mapping
@@ -802,7 +804,39 @@ function getInitialData(): DatabaseSchema {
     assets,
     photos: [],
     audit_logs,
-    rate_limit_records: {}
+    rate_limit_records: {},
+    settings: {
+      app_name: 'ITAM Enterprise',
+      theme: 'default',
+      custom_logo_url: null,
+      custom_logo_base64: null,
+      company_name: 'Enterprise IT Global',
+      updated_at: new Date().toISOString(),
+      updated_by: 'system'
+    },
+    ldap_config: {
+      enabled: true,
+      server_url: 'ldap://ad.corp.internal:389',
+      bind_dn: 'cn=svc_itam_sync,ou=ServiceAccounts,dc=corp,dc=internal',
+      bind_password: '••••••••••••••••',
+      base_dn: 'ou=Users,ou=Enterprise,dc=corp,dc=internal',
+      user_search_filter: '(&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))',
+      sync_schedule: 'daily',
+      attribute_mapping: {
+        employee_code: 'employeeID',
+        full_name: 'displayName',
+        username: 'sAMAccountName',
+        email: 'mail',
+        department: 'department',
+        designation: 'title',
+        phone: 'telephoneNumber',
+        location: 'physicalDeliveryOfficeName'
+      },
+      last_sync_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+      last_sync_status: 'success',
+      last_sync_message: 'Completed scheduled synchronization without errors.',
+      last_sync_count: 15
+    }
   };
 }
 
@@ -1003,6 +1037,76 @@ class Database {
     this.save();
     const { password_hash, ...safeUser } = this.data.users[index];
     return safeUser;
+  }
+
+  // System Settings (Theme & Logo)
+  public getSettings(): SystemSettings {
+    if (!this.data.settings) {
+      this.data.settings = {
+        app_name: 'ITAM Enterprise',
+        theme: 'default',
+        custom_logo_url: null,
+        custom_logo_base64: null,
+        company_name: 'Enterprise IT Global',
+        updated_at: new Date().toISOString(),
+        updated_by: 'system'
+      };
+      this.save();
+    }
+    return this.data.settings;
+  }
+
+  public updateSettings(updates: Partial<SystemSettings>, updatedBy: string): SystemSettings {
+    const current = this.getSettings();
+    this.data.settings = {
+      ...current,
+      ...updates,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy
+    };
+    this.save();
+    return this.data.settings;
+  }
+
+  // LDAP Configuration & State
+  public getLdapConfig(): LdapConfig {
+    if (!this.data.ldap_config) {
+      this.data.ldap_config = {
+        enabled: true,
+        server_url: 'ldap://ad.corp.internal:389',
+        bind_dn: 'cn=svc_itam_sync,ou=ServiceAccounts,dc=corp,dc=internal',
+        bind_password: '••••••••••••••••',
+        base_dn: 'ou=Users,ou=Enterprise,dc=corp,dc=internal',
+        user_search_filter: '(&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))',
+        sync_schedule: 'daily',
+        attribute_mapping: {
+          employee_code: 'employeeID',
+          full_name: 'displayName',
+          username: 'sAMAccountName',
+          email: 'mail',
+          department: 'department',
+          designation: 'title',
+          phone: 'telephoneNumber',
+          location: 'physicalDeliveryOfficeName'
+        },
+        last_sync_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+        last_sync_status: 'success',
+        last_sync_message: 'Completed scheduled synchronization without errors.',
+        last_sync_count: 15
+      };
+      this.save();
+    }
+    return this.data.ldap_config;
+  }
+
+  public updateLdapConfig(updates: Partial<LdapConfig>): LdapConfig {
+    const current = this.getLdapConfig();
+    this.data.ldap_config = {
+      ...current,
+      ...updates
+    };
+    this.save();
+    return this.data.ldap_config;
   }
 }
 

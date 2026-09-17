@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  itam-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: itam-core-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_CONNECTION_STRING=postgresql://itam_admin:${DB_PASSWORD:-itam_secure_pass_2026}@postgres-db:5432/itam_production
+      - SESSION_SECRET=${SESSION_SECRET:-itam_session_secret_key_prod_987}
+      - STORAGE_BACKEND=local
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - itam_data:/app/data
+      - itam_uploads:/app/uploads
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: itam-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=itam_admin
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-itam_secure_pass_2026}
+      - POSTGRES_DB=itam_production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itam_admin -d itam_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  itam_data:
+  itam_uploads:
+  pgdata:

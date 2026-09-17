@@ -17,9 +17,11 @@ import {
   Save,
   AlertCircle,
   Phone,
-  Briefcase
+  Briefcase,
+  Server
 } from 'lucide-react';
 import type { Employee, Asset } from '../types/itam';
+import { LdapSyncModal } from './LdapSyncModal';
 
 interface EmployeesViewProps {
   employees: Employee[];
@@ -38,6 +40,7 @@ interface EmployeesViewProps {
   onSelectEmployeeAssets: (employee: Employee) => void;
   permissions: string[];
   departments: string[];
+  onRefreshEmployees?: () => void;
 }
 
 export const EmployeesView: React.FC<EmployeesViewProps> = ({
@@ -52,10 +55,12 @@ export const EmployeesView: React.FC<EmployeesViewProps> = ({
   onToggleStatus,
   onSelectEmployeeAssets,
   permissions,
-  departments
+  departments,
+  onRefreshEmployees
 }) => {
   const [editingEmployee, setEditingEmployee] = useState<Partial<Employee> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLdapModalOpen, setIsLdapModalOpen] = useState(false);
   const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -130,13 +135,23 @@ export const EmployeesView: React.FC<EmployeesViewProps> = ({
         </div>
 
         {canManageEmployees && (
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Employee</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsLdapModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-300 shadow-2xs transition-colors"
+              title="Synchronize employee directory with LDAP / Active Directory"
+            >
+              <Server className="w-4 h-4 text-indigo-600" />
+              <span>Sync via LDAP</span>
+            </button>
+            <button
+              onClick={handleOpenAdd}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Employee</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -481,6 +496,15 @@ export const EmployeesView: React.FC<EmployeesViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* LDAP Active Directory Synchronization Modal */}
+      <LdapSyncModal
+        isOpen={isLdapModalOpen}
+        onClose={() => setIsLdapModalOpen(false)}
+        onSyncComplete={() => {
+          onRefreshEmployees?.();
+        }}
+      />
     </div>
   );
 };
