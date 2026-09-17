@@ -30,6 +30,7 @@ import { UsersAdminView } from './components/UsersAdminView';
 import { SystemInfoModal } from './components/SystemInfoModal';
 import { LoginModal } from './components/LoginModal';
 import { ThemeSettingsModal } from './components/ThemeSettingsModal';
+import { DocumentationModal } from './components/DocumentationModal';
 
 export default function App() {
   // 1. Authentication State
@@ -41,6 +42,7 @@ export default function App() {
   // 1b. System Settings State (Theme & Logo)
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   // 2. Navigation State
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
@@ -506,6 +508,7 @@ export default function App() {
         onOpenSystemInfo={() => setIsSystemInfoOpen(true)}
         settings={systemSettings}
         onOpenThemeSettings={() => setIsThemeModalOpen(true)}
+        onOpenDocumentation={() => setIsDocModalOpen(true)}
       />
 
       {/* Main Workspace with Sidebar */}
@@ -704,6 +707,12 @@ export default function App() {
         onClose={() => setIsThemeModalOpen(false)}
         currentSettings={systemSettings}
         onSaveSettings={handleSaveSettings}
+      />
+
+      {/* Complete System Documentation & User Guide Modal */}
+      <DocumentationModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
       />
 
       {/* Login Modal */}

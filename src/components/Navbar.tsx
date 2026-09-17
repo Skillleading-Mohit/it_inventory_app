@@ -10,7 +10,8 @@ import {
   Layers,
   FileCode2,
   Lock,
-  Palette
+  Palette,
+  BookOpen
 } from 'lucide-react';
 import type { User, UserRole, SystemSettings } from '../types/itam';
 
@@ -22,6 +23,7 @@ interface NavbarProps {
   onOpenSystemInfo: () => void;
   settings?: SystemSettings | null;
   onOpenThemeSettings?: () => void;
+  onOpenDocumentation?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,7 +33,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenSystemInfo,
   settings,
-  onOpenThemeSettings
+  onOpenThemeSettings,
+  onOpenDocumentation
 }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
@@ -99,6 +102,22 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right Controls: Super Admin tools, Role Switcher, User Profile */}
       <div className="flex items-center gap-3">
+        {/* Documentation & User Guide Modal Button (Available to all users) */}
+        {onOpenDocumentation && (
+          <button
+            onClick={onOpenDocumentation}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${
+              isBw
+                ? 'text-black hover:bg-zinc-100 border-black'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100 border-slate-200'
+            }`}
+            title="Read Complete Platform Documentation, Feature Specifications & Reports Guide"
+          >
+            <BookOpen className={`w-4 h-4 ${isBw ? 'text-black' : 'text-indigo-600'}`} />
+            <span className="hidden sm:inline">Documentation</span>
+          </button>
+        )}
+
         {/* Architecture & Docker specs button (SUPER ADMIN ONLY) */}
         {currentUser?.role === 'super_admin' && (
           <button
