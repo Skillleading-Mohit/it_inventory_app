@@ -1,0 +1,7 @@
+{
+  "name": "IT Asset Management (ITAM) System",
+  "description": "Enterprise-grade IT Asset Management system for tracking hardware, lifecycles, warranties, AMCs, employee assignments, audit history, and reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
